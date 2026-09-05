@@ -81,7 +81,7 @@
     };
 
     // active section highlight
-    var ids = ['about', 'timeline', 'galleries', 'outdoor', 'planetarium', 'visit'];
+    var ids = ['about', 'timeline', 'galleries', 'outdoor', 'toshakhana', 'visit'];
     var map = {};
     ids.forEach(function (id) {
       var a = $('.nav__links a[href="#' + id + '"]');
@@ -145,18 +145,20 @@
     $$('[data-count]').forEach(function (el) {
       var end = parseFloat(el.getAttribute('data-count'));
       var suffix = el.getAttribute('data-suffix') || '';
-      var raw = el.hasAttribute('data-raw'); // 1971 → no thousands separator, no easing artifacts
+      var raw = el.hasAttribute('data-raw'); // a year: render it whole, never count to it
       var io = new IntersectionObserver(function (entries) {
         entries.forEach(function (e) {
           if (!e.isIntersecting) return;
           io.disconnect();
-          if (reduced) { el.textContent = end + suffix; return; }
+          // Years are set outright: counting up through 1941, 1965 … would put
+          // dates on screen that never happened.
+          if (reduced || raw) { el.textContent = end + suffix; return; }
           var t0 = performance.now(), dur = 1500;
           (function step(now) {
             var p = clamp((now - t0) / dur, 0, 1);
             var eased = 1 - Math.pow(1 - p, 3);
             var val = Math.round(end * eased);
-            el.textContent = (raw ? String(val) : val.toLocaleString('en-US')) + suffix;
+            el.textContent = val.toLocaleString('en-US') + suffix;
             if (p < 1) raf(step);
           })(t0);
         });
@@ -189,6 +191,7 @@
     var stars = [], dpr = Math.min(window.devicePixelRatio || 1, 2);
     var o = opts || {};
     var density = o.density || 0.00016;
+    var tint = o.tint || '226,235,240';
     var entry = { canvas: canvas, ctx: ctx, stars: stars, dpr: dpr, drift: o.drift || 0, twinkle: o.twinkle !== false };
 
     entry.build = function () {
@@ -221,7 +224,7 @@
         }
         ctx.beginPath();
         ctx.arc(s.x, s.y, s.r, 0, 6.2832);
-        ctx.fillStyle = 'rgba(226,235,240,' + a.toFixed(3) + ')';
+        ctx.fillStyle = 'rgba(' + tint + ',' + a.toFixed(3) + ')';
         ctx.fill();
       }
     };
@@ -231,7 +234,7 @@
   function sizeCanvases() { canvases.forEach(function (c) { c.build(); }); }
 
   makeStars($('#heroStars'), { density: 0.00012, drift: 0.012 });
-  makeStars($('#skyCanvas'), { density: 0.00022, drift: 0.02 });
+  makeStars($('#skyCanvas'), { density: 0.00020, drift: 0.02, tint: '226,196,132' });
 
   /* ============================================================== PARALLAX */
   var pxItems = [];
